@@ -14,8 +14,8 @@ const FONTS = [
 export type Customization = {
   customText: string;
   font: string;
-  photoName?: string;
-  photoDataUrl?: string;
+  photoName?: string | undefined;
+  photoDataUrl?: string | undefined;
 };
 
 export function ProductCustomizer({

@@ -13,10 +13,10 @@ export type CartItem = {
   id: string;
   slug: string;
   qty: number;
-  customText?: string;
-  font?: string;
-  photoName?: string;
-  photoDataUrl?: string;
+  customText?: string | undefined;
+  font?: string | undefined;
+  photoName?: string | undefined;
+  photoDataUrl?: string | undefined;
 };
 
 type CartContextValue = {
