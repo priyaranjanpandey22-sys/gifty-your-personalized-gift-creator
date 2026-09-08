@@ -24,7 +24,7 @@ export const Route = createFileRoute("/products/$slug")({
       ],
     };
   },
-  component: ProductPage;
+  component: ProductPage,
 });
 
 function ProductPage() {
