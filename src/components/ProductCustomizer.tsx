@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ImagePlus, Trash2, Type as TypeIcon, UploadCloud } from "lucide-react";
-import type { Product } from "@/lib/products";
+import { allowsPhoto, allowsText, type Product } from "@/lib/products";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED = ["image/jpeg", "image/png"];
@@ -32,6 +32,8 @@ export function ProductCustomizer({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const activeFont = FONTS.find((f) => f.id === value.font) ?? FONTS[0]!;
+  const photoAllowed = allowsPhoto(product);
+  const textAllowed = allowsText(product);
 
   function handleFile(file: File | undefined) {
     setError(null);
@@ -62,16 +64,18 @@ export function ProductCustomizer({
           </p>
           <div className="mt-4 flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-secondary">
             <div className="relative size-full">
-              <img
-                src={product.image}
-                alt={`${product.name} mockup`}
-                loading="lazy"
-                width={1024}
-                height={1024}
-                className="size-full object-cover"
-              />
+              {product.image && (
+                <img
+                  src={product.image}
+                  alt={`${product.name} mockup`}
+                  loading="lazy"
+                  width={1024}
+                  height={1024}
+                  className="size-full object-cover"
+                />
+              )}
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 text-center">
-                {value.photoDataUrl && (
+                {photoAllowed && value.photoDataUrl && (
                   <motion.img
                     key={value.photoDataUrl.slice(-24)}
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -82,7 +86,7 @@ export function ProductCustomizer({
                     className="max-h-[42%] w-auto rounded-lg object-contain shadow-lift"
                   />
                 )}
-                {value.customText && (
+                {textAllowed && value.customText && (
                   <motion.p
                     key={value.customText}
                     initial={{ opacity: 0, y: 8 }}
@@ -100,7 +104,11 @@ export function ProductCustomizer({
                 )}
                 {!value.customText && !value.photoDataUrl && (
                   <p className="text-sm font-medium text-muted-foreground">
-                    Add a name or photo to see the mockup
+                    {photoAllowed && textAllowed
+                      ? "Add a name or photo to see the mockup"
+                      : photoAllowed
+                        ? "Add a photo to see the mockup"
+                        : "Add a name to see the mockup"}
                   </p>
                 )}
               </div>
@@ -114,46 +122,50 @@ export function ProductCustomizer({
 
       {/* Controls */}
       <div className="space-y-5">
-        <div>
-          <label
-            htmlFor="custom-text"
-            className="flex items-center gap-2 text-sm font-semibold"
-          >
-            <TypeIcon className="size-4 text-primary" aria-hidden />
-            {product.textLabel ?? "Personalisation text"}
-          </label>
-          <input
-            id="custom-text"
-            className="field mt-2"
-            maxLength={60}
-            placeholder={product.textPlaceholder ?? "Add a name or short message"}
-            value={value.customText}
-            onChange={(e) => onChange({ ...value, customText: e.target.value })}
-          />
-          <p className="mt-1 text-xs text-muted-foreground">
-            {value.customText.length}/60 characters
-          </p>
-        </div>
-
-        <div>
-          <span className="text-sm font-semibold">Print style</span>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {FONTS.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => onChange({ ...value, font: f.id })}
-                className={`btn-base px-4 py-2 text-sm ${
-                  value.font === f.id ? "btn-primary" : "btn-ghost"
-                }`}
+        {textAllowed && (
+          <>
+            <div>
+              <label
+                htmlFor="custom-text"
+                className="flex items-center gap-2 text-sm font-semibold"
               >
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </div>
+                <TypeIcon className="size-4 text-primary" aria-hidden />
+                {product.textLabel ?? "Personalisation text"}
+              </label>
+              <input
+                id="custom-text"
+                className="field mt-2"
+                maxLength={60}
+                placeholder={product.textPlaceholder ?? "Add a name or short message"}
+                value={value.customText}
+                onChange={(e) => onChange({ ...value, customText: e.target.value })}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                {value.customText.length}/60 characters
+              </p>
+            </div>
 
-        {product.allowsPhoto && (
+            <div>
+              <span className="text-sm font-semibold">Print style</span>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {FONTS.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => onChange({ ...value, font: f.id })}
+                    className={`btn-base px-4 py-2 text-sm ${
+                      value.font === f.id ? "btn-primary" : "btn-ghost"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {photoAllowed && (
           <div>
             <span className="flex items-center gap-2 text-sm font-semibold">
               <ImagePlus className="size-4 text-primary" aria-hidden />
