@@ -12,17 +12,28 @@ export function ProductCard({ product }: { product: Product }) {
         className="card-surface block overflow-hidden transition-shadow hover:shadow-lift"
       >
         <div className="relative aspect-square overflow-hidden bg-secondary">
-          <img
-            src={product.image}
-            alt={product.name}
-            loading="lazy"
-            width={1024}
-            height={1024}
-            className="size-full object-cover"
-          />
-          {product.customizable && (
+          {product.image ? (
+            <img
+              src={product.image}
+              alt={product.name}
+              loading="lazy"
+              width={1024}
+              height={1024}
+              className="size-full object-cover"
+            />
+          ) : (
+            <div className="flex size-full items-center justify-center text-sm text-muted-foreground">
+              No photo yet
+            </div>
+          )}
+          {product.customPrinting && (
             <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-card/90 px-2.5 py-1 text-xs font-semibold backdrop-blur">
               <Wand2 className="size-3.5 text-primary" aria-hidden /> Customisable
+            </span>
+          )}
+          {product.stock === 0 && (
+            <span className="absolute right-3 top-3 rounded-full bg-card/90 px-2.5 py-1 text-xs font-semibold backdrop-blur">
+              Out of stock
             </span>
           )}
         </div>

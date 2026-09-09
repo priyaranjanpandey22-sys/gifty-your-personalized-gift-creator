@@ -7,7 +7,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { products, type Product } from "@/lib/products";
+import { useQuery } from "@tanstack/react-query";
+import { productsQuery } from "@/lib/product-queries";
+import type { Product } from "@/lib/products";
 
 export type CartItem = {
   id: string;
@@ -37,6 +39,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const { data: products } = useQuery({ ...productsQuery, staleTime: 60_000 });
 
   useEffect(() => {
     try {
@@ -77,13 +80,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clear = useCallback(() => setItems([]), []);
 
   const productFor = useCallback(
-    (slug: string) => products.find((p) => p.slug === slug),
-    [],
+    (slug: string) => products?.find((p) => p.slug === slug),
+    [products],
   );
 
   const value = useMemo<CartContextValue>(() => {
     const subtotal = items.reduce((sum, item) => {
-      const product = products.find((p) => p.slug === item.slug);
+      const product = products?.find((p) => p.slug === item.slug);
       return sum + (product ? product.price * item.qty : 0);
     }, 0);
     return {
@@ -96,7 +99,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       clear,
       productFor,
     };
-  }, [items, add, remove, setQty, clear, productFor]);
+  }, [items, products, add, remove, setQty, clear, productFor]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

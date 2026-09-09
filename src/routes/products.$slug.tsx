@@ -3,18 +3,21 @@ import { useState } from "react";
 import { Check, ChevronLeft, ShoppingBag } from "lucide-react";
 import { ProductCustomizer, type Customization } from "@/components/ProductCustomizer";
 import { useCart } from "@/lib/cart";
-import { formatINR, getProduct } from "@/lib/products";
+import { productQuery } from "@/lib/product-queries";
+import { allowsPhoto, allowsText, formatINR } from "@/lib/products";
 
 export const Route = createFileRoute("/products/$slug")({
-  loader: ({ params }) => {
-    const product = getProduct(params.slug);
+  loader: async ({ params, context }) => {
+    const product = await context.queryClient.ensureQueryData(productQuery(params.slug));
     if (!product) throw notFound();
     return { product };
   },
   head: ({ loaderData }) => {
     const p = loaderData?.product;
     const title = p ? `${p.name} — Personalised | GD Gifts` : "Gift | GD Gifts";
-    const description = p ? `${p.tagline} ${p.description}`.slice(0, 155) : "Personalised gifts by GD Gifts.";
+    const description = p
+      ? `${p.tagline} ${p.description}`.slice(0, 155)
+      : "Personalised gifts by GD Gifts.";
     return {
       meta: [
         { title },
@@ -25,6 +28,23 @@ export const Route = createFileRoute("/products/$slug")({
     };
   },
   component: ProductPage,
+  errorComponent: () => (
+    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <h1 className="text-2xl font-semibold">We couldn't load this gift</h1>
+      <p className="mt-2 text-sm text-muted-foreground">Please refresh and try again.</p>
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 lg:px-8">
+      <h1 className="text-2xl font-semibold">This gift isn't available</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        It may have been removed from the catalogue.
+      </p>
+      <Link to="/shop" className="btn-base btn-primary mt-6">
+        Browse all gifts
+      </Link>
+    </div>
+  ),
 });
 
 function ProductPage() {
@@ -35,14 +55,17 @@ function ProductPage() {
   const [added, setAdded] = useState(false);
   const [custom, setCustom] = useState<Customization>({ customText: "", font: "script" });
 
+  const personalisable = allowsText(product) || allowsPhoto(product);
+  const soldOut = product.stock === 0;
+
   function addToCart() {
     add({
       slug: product.slug,
       qty,
-      customText: custom.customText,
+      customText: allowsText(product) ? custom.customText : "",
       font: custom.font,
-      photoName: custom.photoName,
-      photoDataUrl: custom.photoDataUrl,
+      photoName: allowsPhoto(product) ? custom.photoName : undefined,
+      photoDataUrl: allowsPhoto(product) ? custom.photoDataUrl : undefined,
     });
     setAdded(true);
     window.setTimeout(() => setAdded(false), 2000);
@@ -57,25 +80,33 @@ function ProductPage() {
       <div className="mt-6 grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <div className="card-surface overflow-hidden">
-            <img
-              src={product.image}
-              alt={product.name}
-              width={1024}
-              height={1024}
-              className="aspect-square w-full object-cover"
-            />
+            {product.image ? (
+              <img
+                src={product.image}
+                alt={product.name}
+                width={1024}
+                height={1024}
+                className="aspect-square w-full object-cover"
+              />
+            ) : (
+              <div className="flex aspect-square w-full items-center justify-center bg-secondary text-sm text-muted-foreground">
+                No photo yet
+              </div>
+            )}
           </div>
           <div className="mt-6 card-surface p-6">
             <h2 className="text-xl font-semibold">Why people gift this</h2>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{product.description}</p>
-            <ul className="mt-5 grid gap-2 sm:grid-cols-2">
-              {product.highlights.map((h) => (
-                <li key={h} className="flex items-start gap-2 text-sm">
-                  <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-                  {h}
-                </li>
-              ))}
-            </ul>
+            {product.highlights.length > 0 && (
+              <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+                {product.highlights.map((h) => (
+                  <li key={h} className="flex items-start gap-2 text-sm">
+                    <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                    {h}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
@@ -89,17 +120,21 @@ function ProductPage() {
                 {formatINR(product.compareAt)}
               </span>
             )}
-            <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-bold text-accent-foreground">
-              Inclusive of printing
-            </span>
+            {product.customPrinting && (
+              <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-bold text-accent-foreground">
+                Inclusive of printing
+              </span>
+            )}
           </div>
 
-          <div className="mt-8">
-            <h2 className="text-lg font-semibold">Personalise it</h2>
-            <div className="mt-4">
-              <ProductCustomizer product={product} value={custom} onChange={setCustom} />
+          {personalisable && (
+            <div className="mt-8">
+              <h2 className="text-lg font-semibold">Personalise it</h2>
+              <div className="mt-4">
+                <ProductCustomizer product={product} value={custom} onChange={setCustom} />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <div className="inline-flex items-center rounded-full border border-border bg-card">
@@ -119,12 +154,17 @@ function ProductPage() {
                 +
               </button>
             </div>
-            <button className="btn-base btn-primary" onClick={addToCart}>
+            <button className="btn-base btn-primary" onClick={addToCart} disabled={soldOut}>
               <ShoppingBag className="size-4" aria-hidden />
-              {added ? "Added to cart" : `Add to cart · ${formatINR(product.price * qty)}`}
+              {soldOut
+                ? "Out of stock"
+                : added
+                  ? "Added to cart"
+                  : `Add to cart · ${formatINR(product.price * qty)}`}
             </button>
             <button
               className="btn-base btn-accent"
+              disabled={soldOut}
               onClick={() => {
                 addToCart();
                 navigate({ to: "/cart" });

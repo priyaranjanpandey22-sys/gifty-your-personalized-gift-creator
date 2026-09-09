@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { ProductCard } from "@/components/ProductCard";
-import { categories, products } from "@/lib/products";
+import { productsQuery } from "@/lib/product-queries";
+import { categories } from "@/lib/products";
 
 const searchSchema = z.object({
   category: z.enum(["mugs", "bottles", "gift-sets", "corporate"]).optional(),
@@ -9,6 +11,7 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/shop")({
   validateSearch: searchSchema,
+  loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery),
   head: () => ({
     meta: [
       { title: "Shop Personalised Gifts | GD Gifts" },
@@ -25,10 +28,22 @@ export const Route = createFileRoute("/shop")({
     ],
   }),
   component: Shop,
+  errorComponent: () => (
+    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <h1 className="text-2xl font-semibold">We couldn't load the gifts</h1>
+      <p className="mt-2 text-sm text-muted-foreground">Please refresh the page and try again.</p>
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <h1 className="text-2xl font-semibold">Nothing here</h1>
+    </div>
+  ),
 });
 
 function Shop() {
   const { category } = Route.useSearch();
+  const { data: products } = useSuspenseQuery(productsQuery);
   const list = category ? products.filter((p) => p.category === category) : products;
   const active = categories.find((c) => c.id === category);
 
@@ -62,11 +77,17 @@ function Shop() {
         ))}
       </div>
 
-      <div className="mt-9 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {list.map((p) => (
-          <ProductCard key={p.slug} product={p} />
-        ))}
-      </div>
+      {list.length === 0 ? (
+        <p className="card-surface mt-9 p-10 text-center text-sm text-muted-foreground">
+          No gifts in this category yet — new pieces are added regularly.
+        </p>
+      ) : (
+        <div className="mt-9 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {list.map((p) => (
+            <ProductCard key={p.slug} product={p} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
