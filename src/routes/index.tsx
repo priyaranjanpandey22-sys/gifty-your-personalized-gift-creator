@@ -24,7 +24,19 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery),
   component: Home,
+  errorComponent: () => (
+    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <h1 className="text-2xl font-semibold">We couldn't load the shop</h1>
+      <p className="mt-2 text-sm text-muted-foreground">Please refresh and try again.</p>
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <h1 className="text-2xl font-semibold">Nothing here</h1>
+    </div>
+  ),
 });
 
 const features = [
