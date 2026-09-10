@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowRight, BadgeCheck, Sparkles, Truck, Wand2 } from "lucide-react";
 import hero from "@/assets/hero.jpg";
 import { ProductCard } from "@/components/ProductCard";
-import { categories, products } from "@/lib/products";
+import { productsQuery } from "@/lib/product-queries";
+import { categories } from "@/lib/products";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -22,7 +24,19 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery),
   component: Home,
+  errorComponent: () => (
+    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <h1 className="text-2xl font-semibold">We couldn't load the shop</h1>
+      <p className="mt-2 text-sm text-muted-foreground">Please refresh and try again.</p>
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <h1 className="text-2xl font-semibold">Nothing here</h1>
+    </div>
+  ),
 });
 
 const features = [
@@ -32,6 +46,7 @@ const features = [
 ];
 
 function Home() {
+  const { data: products } = useSuspenseQuery(productsQuery);
   const bestsellers = products.slice(0, 3);
 
   return (
