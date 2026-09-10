@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowRight, BadgeCheck, Sparkles, Truck, Wand2 } from "lucide-react";
 import hero from "@/assets/hero.jpg";
 import { ProductCard } from "@/components/ProductCard";
-import { categories, products } from "@/lib/products";
+import { productsQuery } from "@/lib/product-queries";
+import { categories } from "@/lib/products";
 
 export const Route = createFileRoute("/")({
   head: () => ({
