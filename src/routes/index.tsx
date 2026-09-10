@@ -46,6 +46,7 @@ const features = [
 ];
 
 function Home() {
+  const { data: products } = useSuspenseQuery(productsQuery);
   const bestsellers = products.slice(0, 3);
 
   return (
