@@ -47,6 +47,11 @@ export function SiteFooter() {
             <li>Print-quality guarantee</li>
             <li>Bulk & corporate enquiries</li>
             <li>Pan-India delivery</li>
+            <li>
+              <Link to="/admin" className="hover:text-foreground">
+                Store admin
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
