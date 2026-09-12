@@ -79,46 +79,31 @@ const productInput = z.object({
 
 export type ProductInput = z.infer<typeof productInput>;
 
-type AuthedContext = { supabase: ReturnType<typeof publicClient>; userId: string };
+const APPROVED_ADMIN_EMAIL = "pandeypriyaranjan08@gmail.com";
+
+type AuthedContext = {
+  supabase: ReturnType<typeof publicClient>;
+  userId: string;
+};
 
 async function assertAdmin(context: AuthedContext) {
-  const { data, error } = await context.supabase.rpc("has_role", {
-    _user_id: context.userId,
-    _role: "admin",
-  });
-  if (error || !data) throw new Error("Forbidden");
+  const { data, error } = await context.supabase.auth.getUser();
+  const email = data.user?.email?.trim().toLowerCase();
+  if (error || data.user?.id !== context.userId || !data.user.email_confirmed_at || email !== APPROVED_ADMIN_EMAIL) {
+    throw new Error("Forbidden");
+  }
 }
 
 /** True when the signed-in user is an admin. */
 export const getIsAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<boolean> => {
-    const { data } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    return Boolean(data);
-  });
-
-/**
- * First-run bootstrap: the very first signed-in user may claim admin.
- * Once an admin exists this always fails.
- */
-export const claimFirstAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<{ ok: boolean; reason?: string }> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { count, error } = await supabaseAdmin
-      .from("user_roles")
-      .select("id", { count: "exact", head: true })
-      .eq("role", "admin");
-    if (error) throw new Error(error.message);
-    if ((count ?? 0) > 0) return { ok: false, reason: "An admin already exists." };
-    const { error: insertError } = await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: context.userId, role: "admin" });
-    if (insertError) throw new Error(insertError.message);
-    return { ok: true };
+    try {
+      await assertAdmin(context as AuthedContext);
+      return true;
+    } catch {
+      return false;
+    }
   });
 
 /** Admin catalogue — every product, including inactive ones. */
