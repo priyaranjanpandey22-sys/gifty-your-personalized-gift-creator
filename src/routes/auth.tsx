@@ -37,7 +37,6 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const next = safePath(redirect);
 
@@ -51,7 +50,6 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    setMessage(null);
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
@@ -123,7 +121,7 @@ function AuthPage() {
             <input
               id="password"
               type="password"
-              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              autoComplete="current-password"
               required
               minLength={8}
               className="field mt-2"
@@ -138,7 +136,6 @@ function AuthPage() {
         </form>
 
         {error && <p className="mt-4 text-sm font-medium text-destructive">{error}</p>}
-        {message && <p className="mt-4 text-sm text-primary">{message}</p>}
       </div>
     </div>
   );

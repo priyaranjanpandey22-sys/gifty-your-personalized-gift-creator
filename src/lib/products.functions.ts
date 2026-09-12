@@ -84,20 +84,26 @@ const APPROVED_ADMIN_EMAIL = "pandeypriyaranjan08@gmail.com";
 type AuthedContext = {
   supabase: ReturnType<typeof publicClient>;
   userId: string;
-  claims?: { email?: unknown };
 };
 
 async function assertAdmin(context: AuthedContext) {
-  const email = typeof context.claims?.email === "string" ? context.claims.email : "";
-  if (email.trim().toLowerCase() !== APPROVED_ADMIN_EMAIL) throw new Error("Forbidden");
+  const { data, error } = await context.supabase.auth.getUser();
+  const email = data.user?.email?.trim().toLowerCase();
+  if (error || data.user?.id !== context.userId || !data.user.email_confirmed_at || email !== APPROVED_ADMIN_EMAIL) {
+    throw new Error("Forbidden");
+  }
 }
 
 /** True when the signed-in user is an admin. */
 export const getIsAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<boolean> => {
-    const email = typeof context.claims.email === "string" ? context.claims.email : "";
-    return email.trim().toLowerCase() === APPROVED_ADMIN_EMAIL;
+    try {
+      await assertAdmin(context as AuthedContext);
+      return true;
+    } catch {
+      return false;
+    }
   });
 
 /** Admin catalogue — every product, including inactive ones. */
