@@ -16,7 +16,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { adminProductsQuery } from "@/lib/product-queries";
 import {
-  claimFirstAdmin,
   deleteProduct,
   getIsAdmin,
   saveProduct,
@@ -85,22 +84,8 @@ function AdminPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isAdminFn = useServerFn(getIsAdmin);
-  const claimFn = useServerFn(claimFirstAdmin);
 
   const adminCheck = useQuery({ queryKey: ["is-admin"], queryFn: () => isAdminFn({}) });
-  const [claimError, setClaimError] = useState<string | null>(null);
-
-  const claim = useMutation({
-    mutationFn: () => claimFn({}),
-    onSuccess: (result) => {
-      if (result.ok) {
-        void queryClient.invalidateQueries({ queryKey: ["is-admin"] });
-      } else {
-        setClaimError(result.reason ?? "Admin access is already assigned.");
-      }
-    },
-    onError: () => setClaimError("We couldn't grant admin access."),
-  });
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -124,19 +109,9 @@ function AdminPage() {
           <ShieldCheck className="mx-auto size-8 text-primary" aria-hidden />
           <h1 className="mt-4 text-2xl font-semibold">Admin access needed</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            This area is limited to store administrators. If you are setting the store up for the
-            first time, you can claim admin access now — this works only while no administrator
-            exists.
+            This account is not approved to manage the store. Sign in with the authorized Google
+            account instead.
           </p>
-          <button
-            className="btn-base btn-primary mt-6"
-            onClick={() => claim.mutate()}
-            disabled={claim.isPending}
-          >
-            {claim.isPending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-            Claim admin access
-          </button>
-          {claimError && <p className="mt-4 text-sm text-destructive">{claimError}</p>}
           <button className="mt-6 block w-full text-sm text-muted-foreground underline" onClick={signOut}>
             Sign out
           </button>

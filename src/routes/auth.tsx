@@ -34,7 +34,6 @@ function safePath(value: string | undefined) {
 function AuthPage() {
   const { redirect } = useSearch({ from: "/auth" });
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -54,21 +53,9 @@ function AuthPage() {
     setError(null);
     setMessage(null);
     try {
-      if (mode === "signup") {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: `${window.location.origin}${next}` },
-        });
-        if (signUpError) throw signUpError;
-        setMessage("Account created. Check your inbox if a confirmation email is required.");
-        const { data } = await supabase.auth.getSession();
-        if (data.session) navigate({ to: next, replace: true });
-      } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInError) throw signInError;
-        navigate({ to: next, replace: true });
-      }
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) throw signInError;
+      navigate({ to: next, replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
@@ -97,7 +84,7 @@ function AuthPage() {
   return (
     <div className="mx-auto flex max-w-md flex-col px-4 py-16 sm:px-6">
       <h1 className="text-3xl font-semibold">
-        {mode === "signin" ? "Sign in" : "Create your account"}
+        Sign in
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
         Sign in to manage the GD Gifts catalogue.
@@ -146,26 +133,12 @@ function AuthPage() {
           </div>
           <button className="btn-base btn-primary w-full" disabled={busy}>
             {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
-            {mode === "signin" ? "Sign in" : "Create account"}
+            Sign in
           </button>
         </form>
 
         {error && <p className="mt-4 text-sm font-medium text-destructive">{error}</p>}
         {message && <p className="mt-4 text-sm text-primary">{message}</p>}
-
-        <button
-          type="button"
-          className="mt-5 text-sm text-muted-foreground underline"
-          onClick={() => {
-            setMode(mode === "signin" ? "signup" : "signin");
-            setError(null);
-            setMessage(null);
-          }}
-        >
-          {mode === "signin"
-            ? "New here? Create an account"
-            : "Already have an account? Sign in"}
-        </button>
       </div>
     </div>
   );
