@@ -19,10 +19,10 @@ export function SiteFooter() {
           </p>
           <div className="mt-5 flex flex-col gap-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2">
-              <Mail className="size-4" aria-hidden /> hello@gdgifts.in
+              <Mail className="size-4" aria-hidden /> giftgdhome@gmail.com
             </span>
             <span className="inline-flex items-center gap-2">
-              <Phone className="size-4" aria-hidden /> +91 00000 00000
+              <Phone className="size-4" aria-hidden /> +91 9038524124
             </span>
           </div>
         </div>
