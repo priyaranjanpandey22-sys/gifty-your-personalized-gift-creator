@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { Gift, Mail, Phone } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import { categories } from "@/lib/products";
+import logo from "@/assets/Logo.jpeg";
 
 export function SiteFooter() {
   return (
@@ -9,7 +10,11 @@ export function SiteFooter() {
         <div className="md:col-span-2">
           <div className="flex items-center gap-2">
             <span className="flex size-9 items-center justify-center rounded-xl bg-brand text-primary-foreground">
-              <Gift className="size-5" aria-hidden />
+              <img
+              src={logo}
+              alt="GD Gifts"
+              className="h-10 w-10 object-contain"
+            />
             </span>
             <span className="font-display text-lg font-semibold">GD Gifts</span>
           </div>
