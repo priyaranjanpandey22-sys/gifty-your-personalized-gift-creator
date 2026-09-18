@@ -1,9 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { ClientOnly } from "@tanstack/react-router";
-import { Gift, ShoppingBag, Menu, X } from "lucide-react";
+import { ShoppingBag, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "@/lib/cart";
 import { categories } from "@/lib/products";
+import logo from "@/assets/Logo.jpeg";
+
 
 function CartBadge() {
   const { count } = useCart();
@@ -23,7 +25,11 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
           <span className="flex size-9 items-center justify-center rounded-xl bg-brand text-primary-foreground">
-            <Gift className="size-5" aria-hidden />
+            <img
+              src={logo}
+              alt="GD Gifts"
+              className="h-10 w-10 object-contain"
+            />
           </span>
           <span className="font-display text-lg font-semibold leading-none">
             GD Gifts
